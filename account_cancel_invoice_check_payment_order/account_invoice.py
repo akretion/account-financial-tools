@@ -22,7 +22,7 @@ from openerp.tools.translate import _
 from openerp.osv import osv, orm
 
 
-class account_invoice(orm.TransientModel):
+class account_invoice(orm.Model):
     _inherit = "account.invoice"
 
     def action_cancel(self, cr, uid, ids, *args):
@@ -45,10 +45,11 @@ class account_invoice(orm.TransientModel):
                 payment_orders = cr.dictfetchone()
                 if payment_orders:
                     raise osv.except_osv(
-                            _('Error !'),
-                            _("Invoice already imported in the payment "
-                              "order (%s) at %s on line %s" %
-                              (payment_orders['payment_name'],
-                               payment_orders['payment_date'],
-                               payment_orders['name'])))
-        return super(account_invoice,self).action_cancel(cr, uid, ids, *args)
+                        _('Error !'),
+                        _("Invoice already imported in the payment "
+                          "order (%s) at %s on line %s" %
+                          (payment_orders['payment_name'],
+                           payment_orders['payment_date'],
+                           payment_orders['name']))
+                    )
+        return super(account_invoice, self).action_cancel(cr, uid, ids, *args)

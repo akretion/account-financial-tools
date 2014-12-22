@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 ##############################################################################
 #
-#    Author Vincent Renaville/Joel Grand-Guillaume. Copyright 2012 Camptocamp SA
+#    Author Vincent Renaville/Joel Grand-Guillaume.
+#    Copyright 2012 Camptocamp SA
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -17,10 +18,10 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##############################################################################
 {
-    "name" : "Move in draft state by default",
-    "version" : "1.0",
-    "depends" : ["base", "account", "account_constraints"],
-    "author" : "Camptocamp",
+    "name": "Move in draft state by default",
+    "version": "1.0",
+    "depends": ["base", "account", "account_constraints"],
+    "author": "Camptocamp",
     'license': 'AGPL-3',
     "description": """
 Let the generated move in draft on invoice and bank statement
@@ -48,7 +49,7 @@ need to make a refund).
 
     """,
     'website': 'http://www.camptocamp.com',
-    'data' : ['account_view.xml',
+    'data': ['account_view.xml',
               'invoice_view.xml'],
     'installable': True,
     'active': False,
