@@ -32,10 +32,10 @@
 
     <menuitem
         name="Financial Assets report"
-        parent="account.final_accounting_reports"
+        parent="account_asset_management.menu_finance_assets"
         action="action_account_asset_report_wizard"
         id="menu_account_asset_report_wizard"
-        sequence="50"
+        sequence="115"
         icon="STOCK_JUSTIFY_FILL"/>
 
   </data>

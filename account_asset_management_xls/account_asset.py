@@ -20,61 +20,65 @@
 #
 ##############################################################################
 
-from openerp.osv import orm
+from openerp import api, models
 
 
-class account_asset_asset(orm.Model):
-    _inherit = 'account.asset.asset'
+class AccountAsset(models.Model):
+    _inherit = 'account.asset'
 
-    def _xls_acquisition_fields(self, cr, uid, context=None):
+    @api.model
+    def _xls_acquisition_fields(self):
         """
         Update list in custom module to add/drop columns or change order
         """
         return [
-            'account', 'name', 'code', 'date_start', 'asset_value',
+            'account', 'name', 'code', 'date_start', 'depreciation_base',
             'salvage_value',
         ]
 
-    def _xls_active_fields(self, cr, uid, context=None):
+    @api.model
+    def _xls_active_fields(self):
         """
         Update list in custom module to add/drop columns or change order
         """
         return [
             'account', 'name', 'code', 'date_start',
-            'asset_value', 'salvage_value',
+            'depreciation_base', 'salvage_value',
             'fy_start_value', 'fy_depr', 'fy_end_value',
             'fy_end_depr',
             'method', 'method_number', 'prorata',
         ]
 
-    def _xls_removal_fields(self, cr, uid, context=None):
+    @api.model
+    def _xls_removal_fields(self):
         """
         Update list in custom module to add/drop columns or change order
         """
         return [
-            'account', 'name', 'code', 'date_remove', 'asset_value',
+            'account', 'name', 'code', 'date_remove', 'depreciation_base',
             'salvage_value',
         ]
 
-    def _xls_acquisition_template(self, cr, uid, context=None):
+    @api.model
+    def _xls_acquisition_template(self):
         """
         Template updates
 
         """
         return {}
 
-    def _xls_active_template(self, cr, uid, context=None):
+    @api.model
+    def _xls_active_template(self):
         """
         Template updates
 
         """
         return {}
 
-    def _xls_removal_template(self, cr, uid, context=None):
+    @api.model
+    def _xls_removal_template(self):
         """
         Template updates
 
         """
         return {}
-
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

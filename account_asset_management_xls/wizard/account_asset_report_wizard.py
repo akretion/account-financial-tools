@@ -20,59 +20,53 @@
 #
 ##############################################################################
 
-from openerp.osv import orm, fields
-from openerp.tools.translate import _
+from openerp import api, exceptions, fields, models, _
 
 
-class wiz_account_asset_report(orm.TransientModel):
+class WizAccountAssetReport(models.TransientModel):
 
     _name = 'wiz.account.asset.report'
     _description = 'Financial Assets report'
 
-    _columns = {
-        'fiscalyear_id': fields.many2one(
-            'account.fiscalyear', 'Fiscal Year', required=True),
-        'parent_asset_id': fields.many2one(
-            'account.asset.asset', 'Asset Filter',
-            domain=[('type', '=', 'view')]),
-    }
+    fiscalyear_id = fields.Many2one(
+        'date.range', 'Fiscal Year', required=True)
+    parent_asset_id = fields.Many2one(
+        'account.asset', 'Asset Filter',
+        domain=[('type', '=', 'view')])
 
-    def xls_export(self, cr, uid, ids, context=None):
-        asset_obj = self.pool.get('account.asset.asset')
-        wiz_form = self.browse(cr, uid, ids)[0]
-        parent_asset_id = wiz_form.parent_asset_id.id
+    @api.multi
+    def xls_export(self):
+        self.ensure_one()
+        asset_obj = self.env['account.asset']
+        parent_asset_id = self.parent_asset_id.id
         if not parent_asset_id:
-            parent_ids = asset_obj.search(
-                cr, uid, [('type', '=', 'view'), ('parent_id', '=', False)])
-            if not parent_ids:
-                raise orm.except_orm(
-                    _('Configuration Error'),
+            parents = asset_obj.search(
+                [('type', '=', 'view'), ('parent_id', '=', False)])
+            if not parents:
+                raise exceptions.UserError(
                     _("No top level asset of type 'view' defined!"))
             else:
-                parent_asset_id = parent_ids[0]
+                parent_asset = parents[0]
 
         # sanity check
-        error_ids = asset_obj.search(
-            cr, uid, [('type', '=', 'normal'), ('parent_id', '=', False)])
-        for error_id in error_ids:
-            error = asset_obj.browse(cr, uid, error_id, context=context)
+        errors = asset_obj.search(
+            [('type', '=', 'normal'), ('parent_id', '=', False)])
+        for error in errors:
             error_name = error.name
             if error.code:
                 error_name += ' (' + error.code + ')' or ''
-            raise orm.except_orm(
-                _('Configuration Error'),
+            raise exceptions.UserError(
                 _("No parent asset defined for asset '%s'!") % error_name)
 
         domain = [('type', '=', 'normal'), ('id', 'child_of', parent_asset_id)]
-        asset_ids = asset_obj.search(cr, uid, domain)
-        if not asset_ids:
-            raise orm.except_orm(
-                _('No Data Available'),
+        assets = asset_obj.search(domain)
+        if not assets:
+            raise exceptions.ValidationError(
                 _('No records found for your selection!'))
 
         datas = {
-            'model': 'account.asset.asset',
-            'fiscalyear_id': wiz_form.fiscalyear_id.id,
+            'model': 'account.asset',
+            'fiscalyear_id': self.fiscalyear_id.id,
             'ids': [parent_asset_id],
         }
         return {'type': 'ir.actions.report.xml',
