@@ -445,7 +445,7 @@ class asset_report_xls(report_xls):
             "WHERE date_start >= %s AND date_start <= %s"
             "AND id IN %s AND type = 'normal' "
             "ORDER BY date_start ASC",
-            (fy.date_start, fy.date_stop, tuple(self.asset_ids)))
+            (fy.date_start, fy.date_end, tuple(self.asset_ids)))
         acq_ids = [x[0] for x in cr.fetchall()]
         return acq_ids
 
@@ -569,7 +569,7 @@ class asset_report_xls(report_xls):
             "(date_remove >= %s AND date_remove <= %s)) "
             "AND id IN %s AND type = 'normal' "
             "ORDER BY date_start ASC",
-            (fy.date_stop, fy.date_start, fy.date_stop, tuple(self.asset_ids))
+            (fy.date_end, fy.date_start, fy.date_end, tuple(self.asset_ids))
             )
         act_ids = [x[0] for x in cr.fetchall()]
         return act_ids
@@ -795,7 +795,7 @@ class asset_report_xls(report_xls):
             "WHERE date_remove >= %s AND date_remove <= %s"
             "AND id IN %s AND type = 'normal' "
             "ORDER BY date_remove ASC",
-            (fy.date_start, fy.date_stop, tuple(self.asset_ids)))
+            (fy.date_start, fy.date_end, tuple(self.asset_ids)))
         dsp_ids = [x[0] for x in cr.fetchall()]
         return dsp_ids
 
