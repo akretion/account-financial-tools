@@ -140,7 +140,7 @@ class AccountAsset(models.Model):
                         float(first_fy_asset_days) / first_fy_duration
             elif daterange_id:
                 duration_factor = self._get_fy_duration(
-                    cr, uid, daterange_id, option='years')
+                    daterange_id, option='years')
         elif daterange_id:
             fy_months = self._get_fy_duration(
                 daterange_id, option='months')
@@ -247,11 +247,11 @@ class AccountAsset(models.Model):
             # - The 'undefined' fiscal years are assumed to be years
             # with a duration equals to calendar year
             self.env.cr.execute(
-                "SELECT id, date_start, date_end "
+                "SELECT r.id, date_start, date_end "
                 "FROM date_range r JOIN date_range_type t"
                 "ON r.type_id = t.id"
                 "WHERE r.company_id = %s"
-                "ORDER BY date_stop ASC LIMIT 1", (company.id,))
+                "ORDER BY date_end ASC LIMIT 1", (company.id,))
             first_fy = self.env.cr.dictfetchone()
             first_fy_date_start = datetime.strptime(
                 first_fy['date_start'], '%Y-%m-%d')
@@ -300,7 +300,7 @@ class AccountAsset(models.Model):
                 if fiscalyear_lock_date > fy_range.date_end:
                     init_flag = True
                 fy_date_stop = datetime.strptime(
-                    fy_range.date_stop, '%Y-%m-%d')
+                    fy_range.date_end, '%Y-%m-%d')
             else:
                 fy_date_stop = fy_date_stop + relativedelta(years=1)
 
