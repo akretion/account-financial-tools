@@ -4,6 +4,7 @@
 #    OpenERP, Open Source Management Solution
 #    Copyright (C) 2012 Therp BV (<http://therp.nl>).
 #    Copyright (C) 2013 Camptocamp SA.
+#    Copyright (C) 2013 Akretion SA.
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -22,7 +23,7 @@
 {
     "name": "Update tax wizard",
     "version": "1.0.44",
-    "author": "Therp BV/Camptocamp SA",
+    "author": "Therp BV/Camptocamp SA/Akretion",
     "category": 'Base',
     'complexity': "normal",
     "description": """
@@ -41,7 +42,7 @@ default values on accounts and products on demand. Defaults for purchase
 and sales taxes can be set at independent times. During the transition,
 the old taxes can still be selected manually on invoice lines etc.
 
-You can select to also duplicate linked tax code 
+You can select to also duplicate linked tax code
 
 After the transition, the old taxes can be made inactive.
 

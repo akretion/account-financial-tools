@@ -7,6 +7,7 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Taxes">
+                    <field name="company_id"/>
                     <field name="name"
                            attrs="{'readonly': [('state', '!=', 'draft')]}"
                            />
@@ -17,10 +18,20 @@
                     <field name="default_amount"
                            attrs="{'readonly': [('state', '!=', 'draft')]}"
                            />
+                    <field name="switch_date"
+                           attrs="{'readonly': [('state', '!=', 'draft')]}"
+                           />
+                    <field name="automatic_tax_update"/>
+                    <button colspan="1" name="unlink_cron"
+                                            string="Delete Crons Tax"
+                                            type="object"
+                                            class="oe_highlight"
+                                            attrs="{'invisible': ['|', ('state', '!=', 'done'), '&amp;', ('sale_set_defaults_cron_id', '=', False), '&amp;', ('sale_set_inactive_cron_id', '=', False), '&amp;', ('purchase_set_defaults_cron_id', '=', False), ('purchase_set_inactive_cron_id', '=', False)]}"
+                                            />
                     <notebook colspan="4">
                         <page string="Taxes">
-                            <group string="Sales taxes" col="4" colspan="4">
-                                <field name="sale_line_ids" height="200" 
+                            <group string="Sales taxes" col="3" colspan="4">
+                                <field name="sale_line_ids" height="200"
                                        nolabel="1" colspan="4"
                                        context="{'tax_real_name': 1}"
                                        />
@@ -29,18 +40,39 @@
                                         string="Add sale taxes"
                                         context="{'type_tax_use': 'sale'}"
                                         states="draft"/>
-                                <button name="set_defaults"
-                                        string="Replace sales tax defaults"
-                                        type="object"
-                                        context="{'type_tax_use': 'sale'}"
-                                        attrs="{'invisible': ['|', ('state', '!=', 'confirm'), ('sale_set_defaults', '!=', False)]}"
-                                        />
-                                <button name="set_inactive"
-                                        string="Set legacy sales taxes inactive"
-                                        type="object"
-                                        context="{'type_tax_use': 'sale'}"
-                                        attrs="{'invisible': ['|', ('state', '!=', 'confirm'), ('sale_set_inactive', '!=', False)]}"
-                                        />
+                                <group col="2">
+                                    <button colspan="2" name="set_defaults"
+                                            string="Immediately replace sales tax defaults"
+                                            type="object"
+                                            context="{'type_tax_use': 'sale'}"
+                                            attrs="{'invisible': ['|', ('state', '!=', 'confirm'), '|', ('sale_set_defaults', '!=', False), ('sale_set_defaults_cron_id', '!=', False)]}"
+                                            />
+                                    <button colspan="1" name="create_cron_set_defaults_sale"
+                                            string="Schedule to replace sales tax defaults"
+                                            type="object"
+                                            attrs="{'invisible': ['|', ('state', '!=', 'confirm'), '|', ('sale_set_defaults', '!=', False), ('sale_set_defaults_cron_id', '!=', False)]}"
+                                            />
+
+                                    <field name="sale_set_defaults_cron_id" nolabel="1"
+                                            attrs="{'invisible': [('sale_set_defaults_cron_id', '=', False)]}"
+                                            />
+                                </group>
+                                <group col="2">
+                                    <button colspan="2" name="set_inactive"
+                                            string="Immediately set legacy sales taxes inactive"
+                                            type="object"
+                                            context="{'type_tax_use': 'sale'}"
+                                            attrs="{'invisible': ['|', ('state', '!=', 'confirm'), '|', ('sale_set_inactive', '!=', False), ('sale_set_inactive_cron_id', '!=', False)]}"
+                                            />
+                                    <button colspan="1" name="create_cron_set_inactive_sale"
+                                            string="Schedule to set legacy sales taxes inactive"
+                                            type="object"
+                                            attrs="{'invisible': ['|', ('state', '!=', 'confirm'), '|', ('sale_set_inactive', '!=', False), ('sale_set_inactive_cron_id', '!=', False)]}"
+                                            />
+                                    <field name="sale_set_inactive_cron_id" nolabel="1"
+                                            attrs="{'invisible': [('sale_set_inactive_cron_id', '=', False)]}"
+                                            />
+                                </group>
                             </group>
                             <group string="Purchase taxes" col="4" colspan="4">
                                 <field name="purchase_line_ids"
@@ -52,36 +84,63 @@
                                         string="Add purchase taxes"
                                         context="{'type_tax_use': 'purchase'}"
                                         states="draft"/>
-                                <button name="set_defaults"
-                                        string="Replace purchase tax defaults"
-                                        type="object"
-                                        context="{'type_tax_use': 'purchase'}"
-                                        attrs="{'invisible': ['|', ('state', '!=', 'confirm'), ('purchase_set_defaults', '!=', False)]}"
-                                        />
-                                
-                                <button name="set_inactive"
-                                        string="Set legacy purchase taxes inactive"
-                                        type="object"
-                                        attrs="{'invisible': ['|', ('state', '!=', 'confirm'), ('purchase_set_inactive', '!=', False)]}"
-                                        context="{'type_tax_use': 'purchase'}"
-                                        />
+                                <group col="2">
+                                    <button colspan="2" name="set_defaults"
+                                            string="Immediately replace purchase tax defaults"
+                                            type="object"
+                                            context="{'type_tax_use': 'purchase'}"
+                                            attrs="{'invisible': ['|', ('state', '!=', 'confirm'), '|', ('purchase_set_defaults', '!=', False), ('purchase_set_defaults_cron_id', '!=', False)]}"
+                                            />
+                                    <button colspan="1" name="create_cron_set_defaults_purchase"
+                                            string="Schedule to replace purchase tax defaults"
+                                            type="object"
+                                            attrs="{'invisible': ['|', ('state', '!=', 'confirm'), '|', ('purchase_set_defaults', '!=', False), ('purchase_set_defaults_cron_id', '!=', False)]}"
+                                            />
+                                    <field name="purchase_set_defaults_cron_id" nolabel="1"
+                                            attrs="{'invisible': [('purchase_set_defaults_cron_id', '=', False)]}"
+                                            />
+                                </group>
+                                <group col="2">
+                                    <button colspan="2" name="set_inactive"
+                                            string="Immediately set legacy purchase taxes inactive"
+                                            type="object"
+                                            attrs="{'invisible': ['|', ('state', '!=', 'confirm'), '|', ('purchase_set_inactive', '!=', False), ('purchase_set_inactive_cron_id', '!=', False)]}"
+                                            context="{'type_tax_use': 'purchase'}"
+                                            />
+                                    <button colspan="1" name="create_cron_set_inactive_purchase"
+                                            string="Schedule to set legacy purchase taxes inactive"
+                                            type="object"
+                                            attrs="{'invisible': ['|', ('state', '!=', 'confirm'), '|', ('purchase_set_inactive', '!=', False), ('purchase_set_inactive_cron_id', '!=', False)]}"
+                                            />
+                                    <field name="purchase_set_inactive_cron_id" nolabel="1"
+                                            attrs="{'invisible': [('purchase_set_inactive_cron_id', '=', False)]}"
+                                            />
+ 
+                                </group>
                             </group>
+                            <button name="confirm"
+                                string="Create tax mappings"
+                                states="draft"
+                                type="object"
+                                class="oe_highlight"
+                                help="When you are done configuring the new tax amounts, click here to create the new taxes and a mapping between the new and old taxes"
+                                />
                             <field name="purchase_set_inactive" invisible="1"/>
                             <field name="sale_set_inactive" invisible="1"/>
                             <field name="purchase_set_defaults" invisible="1"/>
                             <field name="sale_set_defaults" invisible="1"/>
+                            <field name="confirm" invisible="1"/>
+                            <separator name="note" string="Note"/>
+                            <label string='During the transision periode, (configuration is in the state "confirm"). All of the tax on the Invoice
+                            will be tested before the validation. When every action will be done, that mean replacing all the tax
+                            and inactivating the old one, the configuration will be set to the state "done". After that the invoice will be
+                            not tested anymore to avoid waste of perfomance.' colspan="2"/>
                         </page>
                         <page string="Log">
                             <field name="log" colspan="4" nolabel="1"/>
                         </page>
                     </notebook>
-                    <button name="confirm"
-                            string="Create tax mappings"
-                            states="draft"
-                            type="object"
-                            help="When you are done configuring the new tax amounts, click here to create the new taxes and a mapping between the new and old taxes"
-                            />
-                </form>  
+                </form>
             </field>
         </record>
         <record id="update_tax_config_line_tree" model="ir.ui.view">

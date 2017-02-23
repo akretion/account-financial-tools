@@ -4,6 +4,8 @@
 #    OpenERP, Open Source Management Solution
 #    This module copyright (C) 2012 Therp BV (<http://therp.nl>).
 #    This module copyright (C) 2013 Camptocamp (<http://www.camptocamp.com>).
+#    This module copyright (C) 2013 Akretion (<http://www.akretion.com>).
+#
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -20,11 +22,21 @@
 #
 ##############################################################################
 
-from openerp.osv import orm
+from openerp.osv import orm, fields
 
 
 class account_tax(orm.Model):
     _inherit = 'account.tax'
+
+    _columns = {
+        'valid_until': fields.date('Valid Until'),
+        'valid_from': fields.date('Valid From'),
+    }
+
+    _sql_constraints = [
+        ('check_valid_date', 'CHECK(valid_until>valid_from)',
+         'Date valid_from must be less than the date valid_until.'),
+        ]
 
     def name_get(self, cr, uid, ids, context=None):
         if not ids:

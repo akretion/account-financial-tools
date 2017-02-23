@@ -4,6 +4,7 @@
 #    OpenERP, Open Source Management Solution
 #    This module copyright (C) 2012 Therp BV (<http://therp.nl>).
 #    This module copyright (C) 2013 Camptocamp (<http://www.camptocamp.com>).
+#    This module copyright (C) 2013 Akretion (<http://www.akretion.com>).
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -20,11 +21,14 @@
 #
 ##############################################################################
 
-from datetime import datetime
+from datetime import datetime, date, timedelta
 import pickle
 from openerp.osv import orm, fields
 from openerp.tools.translate import _
-
+from openerp.tools import (DEFAULT_SERVER_DATE_FORMAT,
+                           DEFAULT_SERVER_DATETIME_FORMAT,
+                           ormcache)
+import pytz
 
 class UpdateTaxConfig(orm.Model):
     """
@@ -40,6 +44,25 @@ class UpdateTaxConfig(orm.Model):
     """
     _name = 'account.update.tax.config'
     _description = 'Update taxes'
+
+    def _state_get_selection(self, cr, uid, ids, field_name=None, arg=None, context=None):
+        res = {}
+        refresh_cache = False
+        for config in self.browse(cr, uid, ids, context=context):
+            if config.sale_set_defaults and config.purchase_set_defaults\
+                 and config.sale_set_inactive and config.purchase_set_inactive:
+                res[config.id] = 'done'
+                refresh_cache = True
+            elif config.confirm:
+                res[config.id] = 'confirm'
+                refresh_cache = True
+            else:
+                res[config.id] = 'draft'
+        if refresh_cache:
+            self.exist_confirm_config.clear_cache(self)
+            self.automatic_tax_update.clear_cache(self)
+        return res
+
     _columns = {
         'name': fields.char(
             'Legacy taxes prefix', size=64, required=True,
@@ -54,13 +77,23 @@ class UpdateTaxConfig(orm.Model):
             'account.update.tax.config.line',
             'sale_config_id',
             'Sales taxes'),
-        'state': fields.selection(
-            [('draft', 'Draft'),
-             ('confirm', 'Confirm'),
-             ('update_sales', 'Sales updated'),
-             ('update_purchase', 'Purchase updated'),
-             ('done', 'Done'),
-             ], 'State', readonly=True),
+        'state': fields.function(_state_get_selection,
+            type='selection',
+            string='State',
+            readonly=True,
+            selection=[
+                ('draft', 'Draft'),
+                ('confirm', 'Confirm'),
+                ('done', 'Done'),
+            ],
+             store={
+                 'account.update.tax.config':(
+                     lambda self, cr, uid, ids, c={}: ids,
+                     ['sale_set_defaults', 'purchase_set_defaults',
+                     'sale_set_inactive', 'purchase_set_inactive', 'confirm'],
+                     10)
+             },
+        ),
         'default_amount': fields.float(
             'Default new amount', digits=(14, 4),
             help=("Although it is possible to specify a distinct new amount "
@@ -77,16 +110,43 @@ class UpdateTaxConfig(orm.Model):
         'purchase_set_inactive': fields.boolean(
             'Purchase taxes have been set to inactive',
             readonly=True),
+        'automatic_tax_update': fields.boolean(
+            'Automatic tax update',
+            help=('By default if the tax are unvalid OpenERP will raise an error '
+                'if you tick that box the rate will be automatically updated. '
+                'Take care OpenERP will no recompute the unit price so maybe the '
+                'total amount will be different after updating the tax.')),
         'duplicate_tax_code': fields.boolean(
             'Duplicate Tax code linked'),
+        'confirm': fields.boolean('Confirm', readonly=True),
+        'switch_date': fields.date('Switch Date', required=True),
+        'sale_set_defaults_cron_id': fields.many2one(
+                'ir.cron',
+                'Cron Replace Sale Tax'),
+        'purchase_set_defaults_cron_id': fields.many2one(
+                'ir.cron',
+                'Cron Replace Purchase Tax'),
+        'sale_set_inactive_cron_id': fields.many2one(
+                'ir.cron',
+                'Cron Inactive Sale Tax'),
+        'purchase_set_inactive_cron_id': fields.many2one(
+                'ir.cron',
+                'Cron Inactive Purchase Tax'),
+        'company_id': fields.many2one('res.company', 'Company', required=False),
         }
 
     _defaults = {
         'state': 'draft',
+        'confirm': False,
+        'sale_set_defaults_cron_id': False,
+        'purchase_set_defaults_cron_id': False,
+        'sale_set_inactive_cron_id': False,
+        'purchase_set_inactive_cron_id': False,
+        'company_id': lambda s, cr, uid, c: s.pool.get('res.company')._company_default_get(cr, uid, 'account.update.tax.config', context=c),
         }
 
     _sql_constraints = [
-        ('name_uniq', 'unique(name)', 'Name must be unique.'),
+        ('name_uniq', 'unique(name, company)', 'Name must be unique.'),
         ]
 
     def add_lines(self, cr, uid, ids, context=None):
@@ -152,10 +212,15 @@ class UpdateTaxConfig(orm.Model):
                 )
             # Switch names around, not violating the uniqueness constraint
             tax_old_name = line.source_tax_id.name
+            valid_until = datetime.strptime(config.switch_date,
+                                            DEFAULT_SERVER_DATE_FORMAT)
+            valid_until -= timedelta(days=1)
+            valid_until = datetime.strftime(valid_until, DEFAULT_SERVER_DATE_FORMAT)
             tax_pool.write(
-                cr, uid, line.source_tax_id.id,
-                {'name': '[%s] %s' % (config.name, tax_old_name)},
-                context=context)
+                cr, uid, line.source_tax_id.id, {
+                    'name': '[%s] %s' % (config.name, tax_old_name),
+                    'valid_until': valid_until,
+                    }, context=context)
             if line.source_tax_id.amount in [1.0, -1.0, 0]:
                 amount_new = line.source_tax_id.amount
             else:
@@ -189,7 +254,7 @@ class UpdateTaxConfig(orm.Model):
                     ## Check if with have the same tax code for base_code_id
                     if line.source_tax_id.ref_base_code_id.id == line.source_tax_id.base_code_id.id:
                         cp_ref_base_code_id = cp_base_code_id
-                    else:    
+                    else:
                         cp_ref_base_code_id = tax_code_pool.copy(cr, uid,
                                                                  line.source_tax_id.ref_base_code_id.id)
                         rename_old = '[%s] %s' % (config.name,
@@ -220,13 +285,15 @@ class UpdateTaxConfig(orm.Model):
                  'amount': amount_new,
                  'parent_id': False,
                  'child_ids': [(6, 0, [])],
+                 'valid_from': config.switch_date,
+                 'valid_until': False,
                 }, context=context)
             tax_pool.write(
                 cr, uid, target_tax_id, {'name': tax_old_name,
                                          'base_code_id': cp_base_code_id,
                                          'ref_base_code_id': cp_ref_base_code_id,
                                          'tax_code_id': cp_tax_code_id,
-                                         'ref_tax_code_id': cp_ref_tax_code_id 
+                                         'ref_tax_code_id': cp_ref_tax_code_id
                                          }, context=context
                            )
             tax_map[line.source_tax_id.id] = target_tax_id
@@ -268,7 +335,7 @@ class UpdateTaxConfig(orm.Model):
                     ))
         self.write(
             cr, uid, ids[0],
-            {'state': 'confirm', 'log': log}, context=context)
+            {'confirm': True, 'log': log}, context=context)
         return {
             'name': self._description,
             'view_type': 'form',
@@ -372,6 +439,7 @@ class UpdateTaxConfig(orm.Model):
                         write = True
                     new_val.append(tax_map.get(i, i))
                 if write:
+                    print model, obj['id']
                     pool.write(
                         cr, uid, obj['id'],
                         {field: [(6, 0, new_val)]},
@@ -432,6 +500,104 @@ class UpdateTaxConfig(orm.Model):
             'nodestroy': True,
             }
 
+    def _create_cron(self, cr, uid, ids, name, link_field, callback,
+                     type_tax_use, delta_day_exc=None, context=None):
+        if not context or not context.get('tz'):
+            raise orm.except_orm(_('USER ERROR'), 
+                _('Timezone must be specify in context'))
+        for config in self.browse(cr, uid, ids, context=context):
+            date = datetime.strptime(config.switch_date, DEFAULT_SERVER_DATE_FORMAT)
+            local = pytz.timezone(context['tz'])
+            local_datetime = local.localize(date, is_dst=None)
+            utc_datetime = local_datetime.astimezone(pytz.utc)
+            if delta_day_exc:
+                utc_datetime += timedelta(days=delta_day_exc)
+            exc_date = datetime.strftime(utc_datetime, DEFAULT_SERVER_DATETIME_FORMAT)
+            vals = {
+                'name': name,
+                'active': 1,
+                'user_id': uid,
+                'interval_number': 1,
+                'interval_type': 'days',
+                'nextcall': utc_datetime,
+                'numbercall': 1,
+                'doall': 1,
+                'model': 'account.update.tax.config',
+                'function': callback,
+                'args': "([%s], {'type_tax_use': '%s'})"%(config.id, type_tax_use),
+            }
+            cron_obj = self.pool.get('ir.cron')
+            cron_id = cron_obj.create(cr, uid, vals, context=context)
+            config.write({link_field: cron_id})
+        return True
+ 
+    def create_cron_set_defaults_sale(self, cr, uid, ids, context=None):
+        return self._create_cron(cr, uid, ids, 
+                "Scheduler for replacing sale tax",
+                "sale_set_defaults_cron_id",
+                "set_defaults",
+                "sale",
+                context=context)
+
+    def create_cron_set_defaults_purchase(self, cr, uid, ids, context=None):
+        return self._create_cron(cr, uid, ids,
+                'Scheduler for replacing purchase tax',
+                'purchase_set_defaults_cron_id',
+                'set_defaults',
+                'purchase',
+                context=context)
+
+    def create_cron_set_inactive_sale(self, cr, uid, ids, context=None):
+        return self._create_cron(cr, uid, ids,
+                'Scheduler for inactivating old sale tax',
+                'sale_set_inactive_cron_id',
+                'set_inactive',
+                'sale',
+                delta_day_exc=60,
+                context=context)
+
+    def create_cron_set_inactive_purchase(self, cr, uid, ids, context=None):
+        return self._create_cron(cr, uid, ids,
+                'Scheduler for inactivating the old purchase tax',
+                'purchase_set_inactive_cron_id',
+                'set_inactive',
+                'purchase',
+                delta_day_exc=60,
+                context=context)
+
+    def unlink_cron(self, cr, uid, ids, context=None):
+        for config in self.browse(cr, uid, ids, context=context):
+            cron_ids = [
+                config.sale_set_defaults_cron_id.id,
+                config.purchase_set_defaults_cron_id.id,
+                config.sale_set_inactive_cron_id.id,
+              config.purchase_set_inactive_cron_id.id,
+                ]
+            self.pool.get('ir.cron').unlink(cr, uid, cron_ids, context)
+        return True
+
+    def write(self, cr, uid, ids, vals, context=None):
+        if "automatic_tax_update" in vals:
+            self.automatic_tax_update.clear_cache(self)
+        return super(UpdateTaxConfig, self).write(cr, uid, ids, vals, context=context)
+
+    @ormcache(skiparg=3)
+    def exist_confirm_config(self, cr, uid):
+        return self.search(cr, uid, [
+            ('state', '=', 'confirm'),
+            ]) and True or False
+
+    @ormcache(skiparg=3)
+    def automatic_tax_update(self, cr, uid):
+        return self.search(cr, uid, [
+            ('state', '=', 'confirm'),
+            ('automatic_tax_update', '=', True),
+            ]) and True or False
+
+    def unlink(self, cr, uid, ids, context=None):
+        self.exist_confirm_config.clear_cache(self)
+        self.automatic_tax_update.clear_cache(self)
+        return super(UpdateTaxConfig, self).unlink(cr, uid, ids, context=context)
 
 class UpdateTaxConfigLine(orm.Model):
     _name = 'account.update.tax.config.line'
