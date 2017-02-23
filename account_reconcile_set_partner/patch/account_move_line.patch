@@ -1,0 +1,13 @@
+=== modified file 'account/account_move_line.py'
+--- account/account_move_line.py	2012-09-06 14:35:17 +0000
++++ account/account_move_line.py	2013-07-22 15:40:38 +0000
+@@ -912,7 +912,7 @@
+                 'date':date,
+                 'state': 'draft',
+                 'line_id': writeoff_lines
+-            })
++            }, context=context)
+ 
+             writeoff_line_ids = self.search(cr, uid, [('move_id', '=', writeoff_move_id), ('account_id', '=', account_id)])
+             if account_id == writeoff_acc_id:
+
