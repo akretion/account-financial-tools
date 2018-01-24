@@ -617,7 +617,7 @@ class AccountAsset(models.Model):
     def _depreciation_base(self):
         for asset in self:
             if asset.type == 'normal':
-                self.depreciation_base = asset._depreciation_base_compute()
+                asset.depreciation_base = asset._depreciation_base_compute()
             else:
                 def _value_get(record):
                     depreciation_base = asset._depreciation_base_compute()
