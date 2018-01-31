@@ -80,7 +80,7 @@ class AccountAssetLine(models.Model):
         digits_compute=dp.get_precision('Account'),
         string='Next Period Depreciation',
         store=True)
-    depreciated_value = fields.Integer(
+    depreciated_value = fields.Float(
         compute='_compute',
         digits_compute=dp.get_precision('Account'),
         string='Amount Already Depreciated',
