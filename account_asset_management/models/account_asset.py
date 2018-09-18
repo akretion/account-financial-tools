@@ -575,7 +575,7 @@ class AccountAsset(models.Model):
     def validate(self):
         currency_obj = self.env['res.currency']
         for asset in self:
-            if asset.type == 'normal' and currency_obj.is_zero(
+            if asset.type == 'normal' and asset.company_currency_id.is_zero(
                     asset.value_residual):
                 asset.write({'state': 'close'})
             else:
