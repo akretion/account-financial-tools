@@ -97,10 +97,10 @@ class account_invoice_line(orm.Model):
     }
 
     def onchange_account_id(self, cr, uid, ids, product_id,
-                            partner_id, inv_type, fposition_id, account_id):
+                            partner_id, inv_type, fposition_id, account_id, context=None):
         res = super(account_invoice_line, self).onchange_account_id(
             cr, uid, ids, product_id,
-            partner_id, inv_type, fposition_id, account_id)
+            partner_id, inv_type, fposition_id, account_id, context=context)
         if account_id:
             asset_category = self.pool['account.account'].browse(
                 cr, uid, account_id).asset_category_id
