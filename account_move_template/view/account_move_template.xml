@@ -68,7 +68,12 @@
                             <field name="note" />
                         </group>
                         <group string="Taxes" name="tax">
+                            <field name="is_refund" />
                             <field name="tax_line_id" />
+                            <field
+                                name="tax_repartition_line_id"
+                                attrs="{'invisible': [('tax_line_id','=',False)]}"
+                            />
                             <field name="tax_ids" widget="many2many_tags" />
                         </group>
                     </group>

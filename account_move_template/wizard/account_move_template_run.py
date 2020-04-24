@@ -6,6 +6,12 @@ from odoo.exceptions import UserError
 from odoo.tools import float_is_zero
 
 
+class AccountMoveLine(models.Model):
+    _inherit = "account.move.line"
+
+    tax_repartition_line_id = fields.Many2one(readonly=False)
+
+
 class AccountMoveTemplateRun(models.TransientModel):
     _name = "account.move.template.run"
     _description = "Wizard to generate move from template"
@@ -29,7 +35,7 @@ class AccountMoveTemplateRun(models.TransientModel):
         "account.move.template.line.run", "wizard_id", string="Lines"
     )
     state = fields.Selection(
-        [("select_template", "Select Template"), ("set_lines", "Set Lines"),],
+        [("select_template", "Select Template"), ("set_lines", "Set Lines")],
         readonly=True,
         default="select_template",
     )
@@ -43,12 +49,14 @@ class AccountMoveTemplateRun(models.TransientModel):
             "account_id": tmpl_line.account_id.id,
             "partner_id": tmpl_line.partner_id.id or False,
             "move_line_type": tmpl_line.move_line_type,
-            "tax_ids": [(6, 0, tmpl_line.tax_ids.ids)],
             "tax_line_id": tmpl_line.tax_line_id.id,
+            "tax_ids": [(6, 0, tmpl_line.tax_ids.ids)],
             "analytic_account_id": tmpl_line.analytic_account_id.id,
             "analytic_tag_ids": [(6, 0, tmpl_line.analytic_tag_ids.ids)],
             "note": tmpl_line.note,
             "payment_term_id": tmpl_line.payment_term_id.id or False,
+            "is_refund": tmpl_line.is_refund,
+            "tax_repartition_line_id": tmpl_line.tax_repartition_line_id.id or False,
         }
         return vals
 
@@ -83,9 +91,7 @@ class AccountMoveTemplateRun(models.TransientModel):
             return self.generate_move()
         action = self.env.ref("account_move_template.account_move_template_run_action")
         result = action.read()[0]
-        result.update(
-            {"res_id": self.id, "context": self.env.context,}
-        )
+        result.update({"res_id": self.id, "context": self.env.context})
         return result
 
     # STEP 2
@@ -95,6 +101,7 @@ class AccountMoveTemplateRun(models.TransientModel):
         for wizard_line in self.line_ids:
             sequence2amount[wizard_line.sequence] = wizard_line.amount
         prec = self.company_id.currency_id.rounding
+        self.template_id.compute_lines(sequence2amount)
         if all(
             [
                 float_is_zero(x, precision_rounding=prec)
@@ -102,7 +109,6 @@ class AccountMoveTemplateRun(models.TransientModel):
             ]
         ):
             raise UserError(_("Debit and credit of all lines are null."))
-        self.template_id.compute_lines(sequence2amount)
         move_vals = self._prepare_move()
         for line in self.template_id.line_ids:
             amount = sequence2amount[line.sequence]
@@ -148,13 +154,23 @@ class AccountMoveTemplateRun(models.TransientModel):
             "credit": not debit and amount or 0.0,
             "debit": debit and amount or 0.0,
             "partner_id": self.partner_id.id or line.partner_id.id,
-            "tax_line_id": line.tax_line_id.id,
             "date_maturity": date_maturity or self.date,
+            "tax_repartition_line_id": line.tax_repartition_line_id.id or False,
         }
         if line.analytic_tag_ids:
             values["analytic_tag_ids"] = [(6, 0, line.analytic_tag_ids.ids)]
         if line.tax_ids:
             values["tax_ids"] = [(6, 0, line.tax_ids.ids)]
+            tax_repartition = "refund_tax_id" if line.is_refund else "invoice_tax_id"
+            atrl_ids = self.env["account.tax.repartition.line"].search(
+                [
+                    (tax_repartition, "in", line.tax_ids.ids),
+                    ("repartition_type", "=", "base"),
+                ]
+            )
+            values["tag_ids"] = [(6, 0, atrl_ids.mapped("tag_ids").ids)]
+        if line.tax_repartition_line_id:
+            values["tag_ids"] = [(6, 0, line.tax_repartition_line_id.tag_ids.ids)]
         return values
 
 
@@ -192,3 +208,7 @@ class AccountMoveTemplateLineRun(models.TransientModel):
         "Amount", required=True, currency_field="company_currency_id"
     )
     note = fields.Char(readonly=True)
+    is_refund = fields.Boolean(default=False, string="Is a refund?", readonly=True,)
+    tax_repartition_line_id = fields.Many2one(
+        "account.tax.repartition.line", string="Tax Repartition Line", readonly=True,
+    )
