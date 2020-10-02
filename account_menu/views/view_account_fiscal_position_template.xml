@@ -5,16 +5,29 @@ Copyright (C) 2019 - Today: GRAP (http://www.grap.coop)
 License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
 -->
 <odoo>
+    <!-- A porter proprement -->
+    <record id="action_account_fiscal_position_template_form" model="ir.actions.act_window">
+        <field name="name">Fiscal Position Templates</field>
+            <field name="res_model">account.fiscal.position.template</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="account.view_account_position_template_search"/>
+            <field name="help" type="html">
+              <p class="o_view_nocontent_smiling_face">
+                Create a new fiscal position
+              </p>
+            </field>
+        </record>
     <!-- Renaming this action because this default name is not the correct one -->
-    <record
-        id="account.action_account_fiscal_position_template_form"
+<!-- intégré ci-avant    <record
+        id="action_account_fiscal_position_template_form"
         model="ir.actions.act_window"
     >
         <field name="name">Fiscal Position Templates</field>
     </record>
+-->
     <menuitem
         id="menu_account_fiscal_position_template"
-        action="account.action_account_fiscal_position_template_form"
+        action="action_account_fiscal_position_template_form"
         parent="menu_account_coa_settings"
         sequence="40"
     />

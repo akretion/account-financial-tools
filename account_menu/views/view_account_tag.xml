@@ -1,5 +1,17 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <odoo>
+    <!-- todo a porter proprmeent -->
+    <record id="account_tag_action" model="ir.actions.act_window">
+        <field name="name">Account Tags</field>
+        <field name="res_model">account.account.tag</field>
+        <field name="search_view_id" ref="account.account_tag_view_search"/>
+        <field name="help" type="html">
+          <p class="o_view_nocontent_smiling_face">
+            Add a new tag
+          </p>
+        </field>
+    </record>
+
     <record id="account_tag_view_form" model="ir.ui.view">
         <field name="name">tag_addd_accounts_taxes</field>
         <field name="model">account.account.tag</field>
@@ -42,7 +54,7 @@
     </record>
     <menuitem
         id="account_tag_menu"
-        action="account.account_tag_action"
+        action="account_tag_action"
         sequence="40"
         parent="account.account_account_menu"
     />
