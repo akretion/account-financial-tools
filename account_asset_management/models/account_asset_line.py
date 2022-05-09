@@ -180,7 +180,6 @@ class AccountAssetLine(models.Model):
         self.ensure_one()
         asset = self.asset_id
         move_data = {
-            'name': asset.name,
             'date': depreciation_date,
             'ref': self.name,
             'journal_id': asset.profile_id.journal_id.id,
