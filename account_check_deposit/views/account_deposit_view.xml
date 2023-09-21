@@ -21,7 +21,8 @@
                                 string="Validate"
                                 type="object" class="oe_highlight"/>
                         <button name="backtodraft" states="done"
-                                string="Back to Draft" type="object" />
+                                string="Back to Draft" type="object"
+                                confirm="Are you sure you want to go back to draft?" />
                         <button name="get_report" string="Print" type="object"/>
                         <field name="state" widget="statusbar"
                                statusbar_visible="draft,done" />
@@ -136,8 +137,8 @@
 
         <menuitem action="action_check_deposit_tree"
                   id="menu_check_deposit_tree"
-                  parent="account.menu_finance_entries"
-                  sequence="20"/>
+                  parent="account.menu_finance_receivables"
+                  sequence="30"/>
 
     </data>
 </openerp>

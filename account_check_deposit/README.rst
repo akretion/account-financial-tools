@@ -36,7 +36,7 @@ Usage
 
 When you receive a check that pays a customer invoice, you can go to that invoice and click on the button *Register Payment* and select the *Check Received* journal as *Payment Method*.
 
-When you want to deposit checks to the bank, go to the menu *Accounting > Adviser > Check Deposit*, create a new check deposit and set the journal *Checks Received* and select the bank account on which you want to credit the checks. Then click on *Add an item* to select the checks you want to deposit at the bank. Eventually, validate the deposit and print the report (you probably want to customize this report).
+When you want to deposit checks to the bank, go to the menu *Accounting > Customers > Checks Deposits*, create a new check deposit and set the journal *Checks Received* and select the bank account on which you want to credit the checks. Then click on *Add an item* to select the checks you want to deposit at the bank. Eventually, validate the deposit and print the report (you probably want to customize this report).
 
 .. image:: https://odoo-community.org/website/image/ir.attachment/5784_f2813bd/datas
    :alt: Try me on Runbot
