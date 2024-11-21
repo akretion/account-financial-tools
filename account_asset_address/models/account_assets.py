@@ -35,7 +35,7 @@ class AcountAsset(models.Model):
                 line += record.company_address_id.city
             record.address_one_line = line
 
-    @api.model
+    @api.depends("company_id")
     def _compute_child_partner_list(self):
         for record in self:
             record.company_partner_ids = record.env["res.partner"].search(
