@@ -37,7 +37,7 @@
                 <group name="goupby">
                     <filter
                         name="group_site"
-                        string="Par site"
+                        string="Asset address"
                         context="{'group_by': 'company_address_id'}"
                     />
                 </group>

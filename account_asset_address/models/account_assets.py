@@ -18,21 +18,21 @@ class AcountAsset(models.Model):
         comodel_name="res.partner", compute="_compute_child_partner_list"
     )
 
-    @api.onchange("site_address_id")
+    @api.onchange("company_address_id")
     def _compute_address_line(self):
         line = ""
         for record in self:
-            if record.site_address_id.street:
-                line += record.site_address_id.street
-            if record.site_address_id.street2:
+            if record.company_address_id.street:
+                line += record.company_address_id.street
+            if record.company_address_id.street2:
                 line += ", "
-                line += record.site_address_id.street2
-            if record.site_address_id.zip:
+                line += record.company_address_id.street2
+            if record.company_address_id.zip:
                 line += ", "
-                line += record.site_address_id.zip
-            if record.site_address_id.city:
+                line += record.company_address_id.zip
+            if record.company_address_id.city:
                 line += " "
-                line += record.site_address_id.city
+                line += record.company_address_id.city
             record.address_one_line = line
 
     @api.model
