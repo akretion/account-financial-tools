@@ -1,0 +1,48 @@
+<odoo>
+    <record id="edit_account_asset_view_form" model="ir.ui.view">
+        <field name="name">edit.account.asset.form</field>
+        <field name="model">account.asset</field>
+        <field
+            name="inherit_id"
+            ref="account_asset_management.account_asset_view_form"
+        />
+        <field name="arch" type="xml">
+            <notebook position="inside">
+                <page string="Asset position">
+                    <field name="company_id" invisible="1" />
+                    <field name="company_partner_ids" invisible="1" />
+                    <group>
+                        <field
+                            name="company_address_id"
+                            string="Site"
+                            widget="res_partner_many2one"
+                            context="{'show_address': 1}"
+                            options='{"always_reload": True}'
+                        />
+                    </group>
+                </page>
+            </notebook>
+        </field>
+    </record>
+
+    <record id="edit_account_asset_view_search_address" model="ir.ui.view">
+        <field name="name">edit.account.asset.search.address</field>
+        <field name="model">account.asset</field>
+        <field
+            name="inherit_id"
+            ref="account_asset_management.account_asset_view_search"
+        />
+        <field name="arch" type="xml">
+            <search>
+                <group name="goupby">
+                    <filter
+                        name="group_site"
+                        string="Par site"
+                        context="{'group_by': 'company_address_id'}"
+                    />
+                </group>
+            </search>
+        </field>
+    </record>
+
+</odoo>
