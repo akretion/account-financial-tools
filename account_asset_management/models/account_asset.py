@@ -825,6 +825,16 @@ class AccountAsset(models.Model):
         fy = entry["fy"]
         if self.prorata:
             if firstyear:
+                if self.method_period == "month":
+                    depreciation_date_start = self.date_start
+                    current_month_first_day = self.date_start.replace(day=1)
+                    next_month_first_day = fields.Date.add(
+                        current_month_first_day, days=32
+                    ).replace(day=1)
+                    nbr_days = next_month_first_day - current_month_first_day
+                    return (
+                        next_month_first_day - depreciation_date_start
+                    ) / nbr_days / 12 + (12 - self.date_start.month) / 12
                 depreciation_date_start = self.date_start
                 fy_date_stop = entry["date_stop"]
                 first_fy_asset_days = (fy_date_stop - depreciation_date_start).days + 1
