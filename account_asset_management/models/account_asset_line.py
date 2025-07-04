@@ -197,6 +197,22 @@ class AccountAssetLine(models.Model):
                         )
         return super().write(vals)
 
+    def create(self, list_vals):
+        lines = super().create(list_vals)
+        # Line have been imported ensure that previous_id is filled
+        for line in lines:
+            if not line.previous_id:
+                previous_line = None
+                for dep_line in line.asset_id.depreciation_line_ids:
+                    if dep_line.type == "depreciate":
+                        if dep_line == line:
+                            break
+                        else:
+                            previous_line = dep_line
+                if previous_line:
+                    line.previous_id = previous_line
+        return lines
+
     def unlink(self):
         for dl in self:
             if dl.type == "create" and dl.amount:
