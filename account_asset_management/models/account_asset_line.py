@@ -211,6 +211,7 @@ class AccountAssetLine(models.Model):
                             previous_line = dep_line
                 if previous_line:
                     line.previous_id = previous_line
+                    line.line_days = (line.line_date - previous_line.line_date).days
         return lines
 
     def unlink(self):
