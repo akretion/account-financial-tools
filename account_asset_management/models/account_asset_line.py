@@ -209,7 +209,7 @@ class AccountAssetLine(models.Model):
                             break
                         else:
                             previous_line = dep_line
-                if previous_line:
+                if previous_line and line.type == "depreciate":
                     line.previous_id = previous_line
                     line.line_days = (line.line_date - previous_line.line_date).days
         return lines
