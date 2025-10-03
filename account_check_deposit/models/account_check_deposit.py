@@ -273,6 +273,7 @@ class AccountCheckDeposit(models.Model):
                     0,
                     0,
                     {
+                        "name": self.name,
                         "account_id": self.in_hand_check_account_id.id,
                         "partner_id": False,
                         "credit": total_debit,
@@ -284,6 +285,7 @@ class AccountCheckDeposit(models.Model):
                     0,
                     0,
                     {
+                        "name": self.name,
                         "account_id": counterpart_account_id,
                         "partner_id": False,
                         "debit": total_debit,
